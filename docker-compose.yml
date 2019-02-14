@@ -1,8 +1,0 @@
-version: '2.1'
-
-services:
-  php-server:
-    image: php-server
-    build: .
-    ports:
-      - 8080:8080
