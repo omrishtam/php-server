@@ -11,17 +11,13 @@ func main() {
 	envMap := mapEnv(os.Environ())
 
 	http.HandleFunc("/", homeHandler)
-	port := envMap["PORT"]
 	address := envMap["ADDRESS"]
-	if address == "" {
-		address = ":"
-	}
-
+	port := envMap["PORT"]
 	if port == "" {
 		port = "8080"
 	}
 
-	err := http.ListenAndServe(address + port, nil)
+	err := http.ListenAndServe(address + ":" + port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
