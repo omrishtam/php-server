@@ -1,0 +1,10 @@
+version: '2.1'
+
+services:
+  php-server:
+    image: php-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+        - 8080:8080
