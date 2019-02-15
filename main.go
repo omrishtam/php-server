@@ -16,7 +16,7 @@ func main() {
 	
 	userHandler := UserHandler{}
 	r := mux.NewRouter()
-	r.HandleFunc("/user/{id}", userHandler.getUserHandler).Methods("GET")
+	r.HandleFunc("/user/{id}", userHandler.GetUserHandler).Methods("GET")
 	http.Handle("/", r)
 	err := http.ListenAndServe(address + ":" + port, nil)
 	if err != nil {
