@@ -6,6 +6,9 @@ services:
     build: .
     ports:
       - 8080:8080
+    environment:
+      - MONGO_HOST=mongodb:27017
+      - MONGO_DATABASE=php
     depends_on:
       - mongodb
 
