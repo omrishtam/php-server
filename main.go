@@ -51,15 +51,15 @@ func configDB(ctx context.Context) (*mongo.Database, error) {
 	var uri string
 	if ctx.Value(usernameKey) != nil && ctx.Value(passwordKey) != nil {
 		uri = fmt.Sprintf(`mongodb://%s:%s@%s/%s`,
-		ctx.Value(usernameKey),
-		ctx.Value(passwordKey),
-		ctx.Value(hostKey),
-		ctx.Value(databaseKey),
+			ctx.Value(usernameKey),
+			ctx.Value(passwordKey),
+			ctx.Value(hostKey),
+			ctx.Value(databaseKey),
 		)
 	} else {
 		uri = fmt.Sprintf(`mongodb://%s/%s`,
-		ctx.Value(hostKey),
-		ctx.Value(databaseKey),
+			ctx.Value(hostKey),
+			ctx.Value(databaseKey),
 		)
 	}
 	client, err := mongo.NewClient(uri)
