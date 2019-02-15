@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
+	"github.com/gorilla/mux"
 	"net/http"
 	"os"
-	"strings"
+	"log"
 )
 
 const (
@@ -18,7 +18,6 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -28,32 +27,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("database configuration failed: %v", err)
 	}
-
+	
+	userHandler := UserHandler{}
+	r := mux.NewRouter()
+	r.HandleFunc("/user/{id}", userHandler.GetUserHandler).Methods("GET")
+	http.Handle("/", r)	
 	err := http.ListenAndServe(address+":"+port, nil)
 	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		w.Write([]byte("Home Page"))
-	}
-}
-
-func configDB(ctx context.Context) (*mongo.Database, error) {
-	uri := fmt.Sprintf(`mongodb://%s/%s`,
-		ctx.Value(usernameKey),
-		ctx.Value(databaseKey),
-	)
-	client, err := mongo.NewClient(uri)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't connect to mongo: %v", err)
-	}
-	err = client.Connect(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("mongo client couldn't connect with background context: %v", err)
-	}
-	phpDB := client.Database("php")
-	return phpDB, nil
-}
