@@ -22,6 +22,8 @@ const (
 	passwordKey = key("passwordKey")
 )
 
+var db *mongo.Client
+
 func main() {
 	var wait time.Duration
     flag.DurationVar(&wait,
@@ -47,6 +49,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("database configuration failed: %v", err)
 	}
+	// Should be removed after the connection will be used...
+	if db != nil {}
 	
 	userHandler := UserHandler{}
 	r := mux.NewRouter()
