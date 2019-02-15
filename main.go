@@ -51,7 +51,7 @@ func main() {
 	}
 	// Should be removed after the connection will be used...
 	if db != nil {}
-	
+
 	userHandler := UserHandler{}
 	r := mux.NewRouter()
 	r.HandleFunc("/user/{id}", userHandler.GetUserHandler).Methods("GET")
