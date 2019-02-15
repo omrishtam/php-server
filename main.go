@@ -64,3 +64,4 @@ func main() {
     // to finalize based on context cancellation.
     log.Println("shutting down")
     os.Exit(0)
+}
