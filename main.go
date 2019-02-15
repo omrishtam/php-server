@@ -34,3 +34,6 @@ func main() {
 	http.Handle("/", r)	
 	err := http.ListenAndServe(address+":"+port, nil)
 	if err != nil {
+		log.Fatal(err)
+	}
+}
