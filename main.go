@@ -1,48 +1,59 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
-	"log"
+)
+
+const (
+	hostKey     = key("hostKey")
+	databaseKey = key("databaseKey")
 )
 
 func main() {
-	envMap := mapEnv(os.Environ())
-
-	http.HandleFunc("/", homeHandler)
-	address := envMap["ADDRESS"]
-	port := envMap["PORT"]
+	address := os.Getenv("ADDRESS")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	err := http.ListenAndServe(address + ":" + port, nil)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	ctx = context.WithValue(ctx, hostKey, os.Getenv("MONGO_HOST"))
+	ctx = context.WithValue(ctx, databaseKey, os.Getenv("MONGO_DATABASE"))
+	db, err := configDB(ctx)
+	if err != nil {
+		log.Fatalf("database configuration failed: %v", err)
+	}
+
+	err := http.ListenAndServe(address+":"+port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func mapEnv(env []string) map[string]string {
-	mapped := map[string]string{}
-
-	for _, val := range env {
-		sep := strings.Index(val, "=")
-
-		if sep > 0 {
-			key := val[0:sep]
-			value := val[sep+1:]
-			mapped[key] = value
-		} else {
-			log.Println("Bad environment: " + val)
-		}
-	}
-
-	return mapped
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		w.Write([]byte("Home Page"))
 	}
-} 
+}
+
+func configDB(ctx context.Context) (*mongo.Database, error) {
+	uri := fmt.Sprintf(`mongodb://%s/%s`,
+		ctx.Value(usernameKey),
+		ctx.Value(databaseKey),
+	)
+	client, err := mongo.NewClient(uri)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't connect to mongo: %v", err)
+	}
+	err = client.Connect(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("mongo client couldn't connect with background context: %v", err)
+	}
+	phpDB := client.Database("php")
+	return phpDB, nil
+}
