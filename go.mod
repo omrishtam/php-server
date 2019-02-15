@@ -1,6 +1,5 @@
 module github.com/omrishtam/php-server
 
-<<<<<<< HEAD
 require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
@@ -10,7 +9,5 @@ require (
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67 // indirect
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
 	golang.org/x/text v0.3.0 // indirect
+	require github.com/gorilla/mux v1.7.0
 )
-=======
-require github.com/gorilla/mux v1.7.0
->>>>>>> develop
