@@ -6,7 +6,8 @@ services:
     build: .
     ports:
       - 8080:8080
-    depends_on: ['mongodb']
+    depends_on:
+      - mongodb
 
   mongodb:
     image: mongo:latest
@@ -15,7 +16,7 @@ services:
       - MONGO_DATA_DIR=/data/db
       - MONGO_LOG_DIR=/dev/null
     volumes:
-      - mongodb_data:/data/db
+      - mongodb_data:/data/db/
     ports:
       - 27017:27017
 
