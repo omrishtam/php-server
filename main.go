@@ -51,7 +51,7 @@ func main() {
 	}
 
 	userHandler := UserHandler{
-		Collection: db.Collection("users"),
+		UserService{Collection: db.Collection("users")},
 	}
 
 	
