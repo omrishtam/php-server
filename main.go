@@ -54,7 +54,9 @@ func main() {
 		Collection: db.Collection("users"),
 	}
 
+	
 	r := mux.NewRouter()
+	r.HandleFunc("/user", userHandler.GetUsersHandler).Methods("GET")
 	r.HandleFunc("/user/{id}", userHandler.GetUserHandler).Methods("GET")
 	r.HandleFunc("/user", userHandler.AddUserHandler).Methods("POST")
 	r.HandleFunc("/user/{id}", userHandler.UpdateUserHandler).Methods("PUT")

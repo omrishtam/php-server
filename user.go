@@ -5,6 +5,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
 	"net/http"
 	"encoding/json"
 	"context"
@@ -22,6 +23,51 @@ type UserHandler struct {
 	Collection *mongo.Collection
 }
 
+// GetUsersHandler Gets a GET request with and responds with the
+// list of all users' data from the database
+func (h UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+	findOptions := options.Find()
+	filter := bson.D{}
+	var users []*User
+
+	cur, err := h.Collection.Find(context.Background(), filter, findOptions)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for cur.Next(context.Background()) {
+		var user User
+		err := cur.Decode(&user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		users = append(users, &user)
+	}
+
+	if err := cur.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = cur.Close(context.Background())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	responseUsers, err := json.Marshal(users)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	w.Write(responseUsers)
+}
+
 // GetUserHandler Gets a GET request with a user's id and responds with the
 // user's data from the database
 func (h UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +75,7 @@ func (h UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	userID := vars["id"]
 	userOid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	
@@ -84,28 +130,41 @@ func (h UserHandler) AddUserHandler(w http.ResponseWriter, r *http.Request) {
 func (h UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["id"]
-	if userID == "" {
-
-	}
-
-	decoder := json.NewDecoder(r.Body)
-
-	var user User
-	err := decoder.Decode(&user)
-
+	userOid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	response, err := json.Marshal(user)
+	
+	decoder := json.NewDecoder(r.Body)
+	
+	var user User
+	err = decoder.Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	filter := bson.D{bson.E{ Key: "_id", Value: userOid}}
+	update := bson.D{
+		{ Key: "$set", Value: bson.D{{ Key: "name", Value: user.Name}}},
+		{ Key: "$set", Value: bson.D{{ Key: "admin", Value: user.Admin}}},
+	}
+
+	updateResult, err := h.Collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	updateResponse, err := json.Marshal(updateResult)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(response)
+	w.Write(updateResponse)
 }
 
 // DeleteUserHandler Gets a DELETE request with a user's id and responds with 
@@ -113,8 +172,25 @@ func (h UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 func (h UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["id"]
-	userID = ""
+	userOid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	filter := bson.D{bson.E{ Key: "_id", Value: userOid}}
+	deleteResult, err := h.Collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	deleteResponse, err := json.Marshal(deleteResult)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(userID))
+	w.Write(deleteResponse)
 }
