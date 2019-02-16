@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"net/http"
 	"encoding/json"
@@ -11,9 +12,9 @@ import (
 
 // User is a structure used for serializing/deserialzing user data
 type User struct {
-	ID string `json:"_id"`
-	Name string `json:"name"`
-	Admin bool `json:"admin"`
+	ID primitive.ObjectID `json:"_id" bson:"_id"`
+	Name string `json:"name" bson:"name"`
+	Admin bool `json:"admin" bson:"admin"`
 }
 
 // UserHandler is a structure used for handling requests for user related actions
@@ -26,10 +27,16 @@ type UserHandler struct {
 func (h UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["id"]
-	filter := bson.D{{"_id", userID}}
+	userOid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	filter := bson.D{bson.E{ Key: "_id", Value: userOid}}
 	var user User
 
-	err := h.Collection.FindOne(context.Background(), filter).Decode(&user)
+	err = h.Collection.FindOne(context.Background(), filter).Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -57,15 +64,19 @@ func (h UserHandler) AddUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	
+	user.ID = primitive.NewObjectID()
 
-	response, err := json.Marshal(user)
+	insertResult, err := h.Collection.InsertOne(context.Background(), user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	
+	insertResponse, err := json.Marshal(insertResult.InsertedID)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(response)
+	w.Write(insertResponse)
 }
 
 // UpdateUserHandler Gets a PUT request with user's data in the request's body
