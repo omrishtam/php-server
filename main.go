@@ -49,10 +49,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("database configuration failed: %v", err)
 	}
-	// Should be removed after the connection will be used...
-	if db != nil {}
 
-	userHandler := UserHandler{}
+	userHandler := UserHandler{
+		Collection: db.Collection("users"),
+	}
+
 	r := mux.NewRouter()
 	r.HandleFunc("/user/{id}", userHandler.GetUserHandler).Methods("GET")
 	r.HandleFunc("/user", userHandler.AddUserHandler).Methods("POST")
@@ -119,6 +120,12 @@ func configDB(ctx context.Context) (*mongo.Database, error) {
 	if err != nil {
 		return nil, fmt.Errorf("mongo client couldn't connect with background context: %v", err)
 	}
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("mongo client couldn't connect with background context: %v", err)
+	}
+
 	phpDB := client.Database("php")
 	return phpDB, nil
 }

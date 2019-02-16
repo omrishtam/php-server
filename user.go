@@ -2,27 +2,47 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"net/http"
-	"fmt"
 	"encoding/json"
+	"context"
 )
 
 // User is a structure used for serializing/deserialzing user data
 type User struct {
-	ID string `json:"id"`
+	ID string `json:"_id"`
+	Name string `json:"name"`
+	Admin bool `json:"admin"`
 }
 
 // UserHandler is a structure used for handling requests for user related actions
-type UserHandler struct {}
+type UserHandler struct {
+	Collection *mongo.Collection
+}
 
 // GetUserHandler Gets a GET request with a user's id and responds with the
 // user's data from the database
 func (h UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	userID := ""
-	userID = vars["id"]
+	userID := vars["id"]
+	filter := bson.D{{"_id", userID}}
+	var user User
 
-	fmt.Fprintf(w, "%s", userID)
+	err := h.Collection.FindOne(context.Background(), filter).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	responseUser, err := json.Marshal(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	w.Write(responseUser)
 }
 
 // AddUserHandler Gets a POST request with user's data in the request's body and saves
