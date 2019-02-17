@@ -173,7 +173,7 @@ func (h UserHandler) AddUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	user.ID = primitive.NewObjectID()
+	user.ID = primitive.NilObjectID
 	user.Admin = false
 
 	if user.Name != "" {
