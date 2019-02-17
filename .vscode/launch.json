@@ -10,7 +10,10 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "env": {},
+            "env": {
+                "MONGO_HOST": "127.0.0.1:27017",
+                "MONGO_DATABASE": "php"
+            },
             "args": []
         }
     ]
